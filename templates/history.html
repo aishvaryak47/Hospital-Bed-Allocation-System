@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Allocation History - Hospital Bed System{% endblock %}
+{% block page_title %}Allocation Audit Log & Reallocation History{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+        <h6 class="fw-bold m-0 text-slate-800">
+            <i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> Bed Allocation Audit Log
+        </h6>
+        <span class="badge bg-light text-dark border">Real-time DB History</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle m-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Timestamp</th>
+                        <th>Patient Code</th>
+                        <th>Patient Name</th>
+                        <th>Priority</th>
+                        <th>Department</th>
+                        <th>Bed Number</th>
+                        <th>Action Performed</th>
+                        <th class="pe-4">Audit Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">Loading allocation audit logs...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        loadHistory();
+    });
+
+    async function loadHistory() {
+        try {
+            const res = await fetch('/api/history');
+            const logs = await res.json();
+
+            const tbody = document.getElementById('historyTableBody');
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">No history entries logged yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = logs.map(l => `
+                <tr>
+                    <td class="ps-4 text-muted text-xs font-monospace">${l.timestamp}</td>
+                    <td class="font-monospace fw-bold text-primary">${l.patient_code}</td>
+                    <td class="fw-semibold text-dark">${l.patient_name}</td>
+                    <td>
+                        <span class="badge ${l.priority === 'Emergency' ? 'badge-emergency' : (l.priority === 'Critical' ? 'badge-critical' : 'badge-general')}">
+                            ${l.priority}
+                        </span>
+                    </td>
+                    <td>${l.department_name}</td>
+                    <td><span class="badge bg-dark text-light font-monospace">${l.bed_number}</span></td>
+                    <td>
+                        <span class="badge ${l.action === 'Allocated' ? 'bg-success' : (l.action === 'Reallocated' ? 'bg-warning text-dark' : 'bg-secondary')}">
+                            ${l.action}
+                        </span>
+                    </td>
+                    <td class="pe-4 text-xs text-muted">${l.notes || '--'}</td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            console.error("Failed to load audit history", err);
+        }
+    }
+</script>
+{% endblock %}

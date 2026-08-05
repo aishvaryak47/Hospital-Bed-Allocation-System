@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Hospital Bed Allocation System{% endblock %}
+{% block page_title %}Hospital Bed Command Center{% endblock %}
+
+{% block content %}
+<!-- Top KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card metric-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-muted fw-semibold mb-1">Total Patients</div>
+                    <h3 class="fw-bold m-0" id="kpiTotalPatients">--</h3>
+                </div>
+                <div class="icon-shape bg-primary-subtle text-primary">
+                    <i class="fa-solid fa-users-medical fa-lg"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-xs text-muted">
+                <span class="text-success fw-medium" id="kpiPendingPatients">--</span> pending allocation
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card metric-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-muted fw-semibold mb-1">Available Beds</div>
+                    <h3 class="fw-bold text-success m-0" id="kpiAvailableBeds">--</h3>
+                </div>
+                <div class="icon-shape bg-success-subtle text-success">
+                    <i class="fa-solid fa-bed-pulse fa-lg"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-xs text-muted">
+                Ready for admission
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card metric-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-muted fw-semibold mb-1">Occupied Beds</div>
+                    <h3 class="fw-bold text-danger m-0" id="kpiOccupiedBeds">--</h3>
+                </div>
+                <div class="icon-shape bg-danger-subtle text-danger">
+                    <i class="fa-solid fa-bed fa-lg"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-xs text-muted">
+                Currently admitted
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card metric-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-muted fw-semibold mb-1">Emergency Patients</div>
+                    <h3 class="fw-bold text-danger m-0" id="kpiEmergencyPatients">--</h3>
+                </div>
+                <div class="icon-shape bg-danger text-white">
+                    <i class="fa-solid fa-truck-medical fa-lg"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-xs text-danger fw-semibold">
+                Priority Level 1 (Immediate matching)
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card metric-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-muted fw-semibold mb-1">Hospital Occupancy Rate</div>
+                    <h3 class="fw-bold text-primary m-0" id="kpiOccupancyRate">--%</h3>
+                </div>
+                <div class="icon-shape bg-info-subtle text-info">
+                    <i class="fa-solid fa-chart-line fa-lg"></i>
+                </div>
+            </div>
+            <div class="progress mt-3" style="height: 6px;">
+                <div class="progress-bar bg-primary" id="kpiOccupancyProgressBar" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Graph Theory Network Canvas & Department Status -->
+<div class="row g-4 mb-4">
+    <!-- NetworkX Live Graph Visualization -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="fw-bold m-0 text-slate-800">
+                        <i class="fa-solid fa-circle-nodes text-primary me-2"></i> Discrete Math Graph Matching Network
+                    </h6>
+                    <small class="text-muted">Live NetworkX Topology: $G = (V_{\text{Patients}} \cup V_{\text{Depts}} \cup V_{\text{Beds}}, E)$</small>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="badge badge-emergency"><i class="fa-solid fa-circle me-1"></i> Emergency</span>
+                    <span class="badge badge-available"><i class="fa-solid fa-square me-1"></i> Available Bed</span>
+                    <span class="badge badge-occupied"><i class="fa-solid fa-square me-1"></i> Occupied Bed</span>
+                </div>
+            </div>
+            <div class="card-body p-2 position-relative">
+                <div id="graphNetworkCanvas"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Capacity Overview -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold m-0 text-slate-800">
+                    <i class="fa-solid fa-hospital me-2 text-primary"></i> Department Capacity & Sets
+                </h6>
+            </div>
+            <div class="card-body p-3 overflow-auto" style="max-height: 440px;" id="deptCapacityList">
+                <div class="text-center py-4 text-muted">Loading department data...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analytical Charts -->
+<div class="row g-4">
+    <!-- Department Occupancy Bar Chart -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold m-0 text-slate-800">Department-wise Bed Occupancy</h6>
+            </div>
+            <div class="card-body p-3">
+                <canvas id="chartDeptOccupancy" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Priority & Bed Distribution -->
+    <div class="col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold m-0 text-slate-800">Patient Priority Queue</h6>
+            </div>
+            <div class="card-body p-3">
+                <canvas id="chartPriorityDistribution" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold m-0 text-slate-800">Bed Status Sets</h6>
+            </div>
+            <div class="card-body p-3">
+                <canvas id="chartBedStatus" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let networkGraph = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        loadDashboardStats();
+        loadNetworkGraph();
+        loadCharts();
+    });
+
+    async function loadDashboardStats() {
+        try {
+            const res = await fetch('/api/dashboard/stats');
+            const data = await res.json();
+            
+            document.getElementById('kpiTotalPatients').textContent = data.total_patients;
+            document.getElementById('kpiPendingPatients').textContent = data.pending_patients;
+            document.getElementById('kpiAvailableBeds').textContent = data.available_beds;
+            document.getElementById('kpiOccupiedBeds').textContent = data.occupied_beds;
+            document.getElementById('kpiEmergencyPatients').textContent = data.emergency_patients;
+            document.getElementById('kpiOccupancyRate').textContent = data.overall_occupancy_rate + '%';
+            document.getElementById('kpiOccupancyProgressBar').style.width = data.overall_occupancy_rate + '%';
+
+            // Render Dept Capacity List
+            const deptContainer = document.getElementById('deptCapacityList');
+            deptContainer.innerHTML = data.departments.map(d => `
+                <div class="mb-3 p-2 border rounded-2 bg-light-subtle">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-semibold text-dark">${d.name} (${d.code})</span>
+                        <span class="badge ${d.occupancy_rate > 85 ? 'bg-danger' : (d.occupancy_rate > 60 ? 'bg-warning text-dark' : 'bg-success')}">${d.occupancy_rate}%</span>
+                    </div>
+                    <div class="d-flex justify-content-between text-xs text-muted mb-1">
+                        <span>Total: ${d.total_beds} beds</span>
+                        <span>Occ: ${d.occupied_beds} | Avail: ${d.available_beds}</span>
+                    </div>
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar bg-primary" style="width: ${d.occupancy_rate}%"></div>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (err) {
+            console.error("Failed to load dashboard stats", err);
+        }
+    }
+
+    async function loadNetworkGraph() {
+        try {
+            const res = await fetch('/api/graph/data');
+            const graphData = await res.json();
+
+            const container = document.getElementById('graphNetworkCanvas');
+            const data = {
+                nodes: new vis.DataSet(graphData.nodes),
+                edges: new vis.DataSet(graphData.edges)
+            };
+
+            const options = {
+                physics: {
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -35,
+                        centralGravity: 0.01,
+                        springLength: 70,
+                        springConstant: 0.08
+                    }
+                },
+                interaction: { hover: true, zoomView: true }
+            };
+
+            networkGraph = new vis.Network(container, data, options);
+        } catch (err) {
+            console.error("Failed to render Vis.js network graph", err);
+        }
+    }
+
+    async function loadCharts() {
+        try {
+            const res = await fetch('/api/dashboard/charts');
+            const data = await res.json();
+
+            // Dept Occupancy Bar Chart
+            new Chart(document.getElementById('chartDeptOccupancy'), {
+                type: 'bar',
+                data: {
+                    labels: data.dept_occupancy.labels,
+                    datasets: [
+                        { label: 'Occupied', data: data.dept_occupancy.occupied, backgroundColor: '#ef4444' },
+                        { label: 'Available', data: data.dept_occupancy.available, backgroundColor: '#10b981' }
+                    ]
+                },
+                options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
+            });
+
+            // Priority Distribution Doughnut Chart
+            new Chart(document.getElementById('chartPriorityDistribution'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.priority_distribution.labels,
+                    datasets: [{
+                        data: data.priority_distribution.data,
+                        backgroundColor: ['#dc2626', '#ea580c', '#2563eb']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // Bed Status Pie Chart
+            new Chart(document.getElementById('chartBedStatus'), {
+                type: 'pie',
+                data: {
+                    labels: data.bed_status.labels,
+                    datasets: [{
+                        data: data.bed_status.data,
+                        backgroundColor: ['#10b981', '#ef4444', '#f59e0b']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+
+        } catch (err) {
+            console.error("Failed to load charts", err);
+        }
+    }
+</script>
+{% endblock %}

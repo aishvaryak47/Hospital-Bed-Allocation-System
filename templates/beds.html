@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Bed Management - Hospital Bed Allocation System{% endblock %}
+{% block page_title %}Hospital Bed Inventory & Set Theory State{% endblock %}
+
+{% block content %}
+<!-- Set Theory Banner -->
+<div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h6 class="fw-bold m-0 text-slate-800">
+                <i class="fa-solid fa-layer-group text-primary me-2"></i> Discrete Set Theory Verification
+            </h6>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Set Disjointness: Valid</span>
+        </div>
+        <div class="row g-3 text-center" id="setTheoryCounters">
+            <div class="col-md-3">
+                <div class="p-3 bg-light rounded-3 border">
+                    <div class="text-xs text-uppercase text-muted fw-semibold">Universal Set $U_{\text{Beds}}$</div>
+                    <h3 class="fw-bold text-dark m-0 mt-1" id="setCountTotal">--</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-success-subtle rounded-3 border border-success-subtle">
+                    <div class="text-xs text-uppercase text-muted fw-semibold">Available Set $S_{\text{Available}}$</div>
+                    <h3 class="fw-bold text-success m-0 mt-1" id="setCountAvailable">--</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-danger-subtle rounded-3 border border-danger-subtle">
+                    <div class="text-xs text-uppercase text-muted fw-semibold">Occupied Set $S_{\text{Occupied}}$</div>
+                    <h3 class="fw-bold text-danger m-0 mt-1" id="setCountOccupied">--</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-warning-subtle rounded-3 border border-warning-subtle">
+                    <div class="text-xs text-uppercase text-muted fw-semibold">Maintenance Set $S_{\text{Maint}}$</div>
+                    <h3 class="fw-bold text-warning-emphasis m-0 mt-1" id="setCountMaint">--</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bed Grid Filters -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <select id="bedDeptFilter" class="form-select" onchange="loadBeds()">
+                    <option value="All">All Departments</option>
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select id="bedAvailFilter" class="form-select" onchange="loadBeds()">
+                    <option value="All">All Availability States</option>
+                    <option value="Available">Available Beds</option>
+                    <option value="Occupied">Occupied Beds</option>
+                    <option value="Maintenance">Maintenance</option>
+                </select>
+            </div>
+            <div class="col-md-4 text-end">
+                <span class="text-muted text-xs me-2">Click any bed card to update availability state</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bed Grid Cards -->
+<div class="row g-3" id="bedGridContainer">
+    <div class="col-12 text-center py-5 text-muted">Loading bed grid inventory...</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        loadSetTheoryStats();
+        loadBeds();
+        loadDeptFilter();
+    });
+
+    async function loadSetTheoryStats() {
+        try {
+            const res = await fetch('/api/set-theory');
+            const data = await res.json();
+            
+            document.getElementById('setCountTotal').textContent = data.total_beds_count;
+            document.getElementById('setCountAvailable').textContent = data.available_beds_count;
+            document.getElementById('setCountOccupied').textContent = data.occupied_beds_count;
+            document.getElementById('setCountMaint').textContent = data.maintenance_beds_count;
+        } catch (err) {
+            console.error("Failed to load set theory stats", err);
+        }
+    }
+
+    async function loadDeptFilter() {
+        try {
+            const res = await fetch('/api/dashboard/stats');
+            const data = await res.json();
+            const select = document.getElementById('bedDeptFilter');
+            select.innerHTML = '<option value="All">All Departments</option>' + 
+                data.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function loadBeds() {
+        try {
+            const dept = document.getElementById('bedDeptFilter').value;
+            const avail = document.getElementById('bedAvailFilter').value;
+
+            const query = new URLSearchParams({ department_id: dept, availability: avail });
+            const res = await fetch('/api/beds?' + query.toString());
+            const beds = await res.json();
+
+            const container = document.getElementById('bedGridContainer');
+            if (beds.length === 0) {
+                container.innerHTML = `<div class="col-12 text-center py-4 text-muted">No beds found matching filters.</div>`;
+                return;
+            }
+
+            container.innerHTML = beds.map(b => `
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                    <div class="card border-0 shadow-sm rounded-3 h-100 p-3 position-relative" style="background-color: ${b.availability === 'Available' ? '#f0fdf4' : (b.availability === 'Occupied' ? '#fef2f2' : '#fffbeb')}; border-top: 4px solid ${b.availability === 'Available' ? '#10b981' : (b.availability === 'Occupied' ? '#ef4444' : '#f59e0b')} !important;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold font-monospace ${b.availability === 'Available' ? 'text-success' : (b.availability === 'Occupied' ? 'text-danger' : 'text-warning-emphasis')}">${b.bed_number}</span>
+                            <span class="badge ${b.availability === 'Available' ? 'badge-available' : (b.availability === 'Occupied' ? 'badge-occupied' : 'badge-maintenance')}">${b.availability}</span>
+                        </div>
+                        <div class="text-xs text-muted mb-2">${b.department_name}</div>
+                        <small class="text-xs fw-medium text-secondary mb-3 d-block">${b.bed_type}</small>
+                        
+                        <div class="mt-auto pt-2 border-top">
+                            ${b.current_patient ? `
+                                <div class="text-xs fw-semibold text-danger text-truncate">
+                                    <i class="fa-solid fa-user me-1"></i> ${b.current_patient.name}
+                                </div>
+                                <span class="badge badge-emergency text-xs mt-1">${b.current_patient.priority}</span>
+                            ` : `
+                                <div class="text-xs text-muted text-center">Unoccupied</div>
+                            `}
+                        </div>
+
+                        <div class="mt-2 text-center">
+                            <button class="btn btn-xs btn-outline-secondary w-100" onclick="toggleBedStatus(${b.id}, '${b.availability}')">
+                                Change Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (err) {
+            console.error("Failed to load beds", err);
+        }
+    }
+
+    async function toggleBedStatus(bedId, currentAvail) {
+        const states = ['Available', 'Occupied', 'Maintenance'];
+        let nextState = 'Available';
+        if (currentAvail === 'Available') nextState = 'Maintenance';
+        else if (currentAvail === 'Maintenance') nextState = 'Available';
+        else {
+            alert("Occupied beds must be released by discharging the patient.");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/beds', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bed_id: bedId, availability: nextState })
+            });
+            if (res.ok) {
+                loadBeds();
+                loadSetTheoryStats();
+            }
+        } catch (err) {
+            console.error("Error updating bed status", err);
+        }
+    }
+</script>
+{% endblock %}

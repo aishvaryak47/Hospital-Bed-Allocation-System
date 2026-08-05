@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Discrete Mathematics Proofs & Reports - Hospital System{% endblock %}
+{% block page_title %}Discrete Mathematics Analytical Reports & Formal Proofs{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Concept 1: Graph Theory -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold m-0 text-slate-800">
+                    <i class="fa-solid fa-diagram-project text-primary me-2"></i> 1. Graph Theory Model
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-sm text-secondary">The hospital network is modeled as a directed multi-partite graph $G = (V, E)$, where vertex set $V$ is partitioned into disjoint subsets:</p>
+                <ul class="text-xs text-muted mb-3">
+                    <li>$V_P$: Patient nodes parameterized by urgency weight $w(p_i)$.</li>
+                    <li>$V_D$: Department nodes acting as routing hubs.</li>
+                    <li>$V_B$: Bed nodes representing physical hospital capacity.</li>
+                </ul>
+                <div class="p-3 bg-light rounded-3 font-monospace text-xs mb-3">
+                    Edge Weights: $w(P_i, D_j) = 4 - \text{PriorityLevel}(P_i)$<br>
+                    Matching Algorithm: Maximum Weight Bipartite Matching via NetworkX.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Concept 2: Priority Queues -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold m-0 text-slate-800">
+                    <i class="fa-solid fa-list-ol text-primary me-2"></i> 2. Priority Queue & Order Theory
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-sm text-secondary">Patient admission queue forms a strict total order under priority tuple $(L, T_{\text{adm}})$:</p>
+                <div class="p-3 bg-light rounded-3 font-monospace text-xs mb-3">
+                    Emergency (Level 1) &gt; Critical (Level 2) &gt; General (Level 3)<br>
+                    Tie-breaker: FIFO ordering based on $T_{\text{adm}}$ timestamp.
+                </div>
+                <p class="text-xs text-muted">Implemented using Python <code>heapq</code> min-heap invariant, guaranteeing $O(\log N)$ insertion and extraction time.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Concept 3: Set Theory -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold m-0 text-slate-800">
+                    <i class="fa-solid fa-layer-group text-primary me-2"></i> 3. Set Theory Invariants
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-sm text-secondary">Bed state management enforces partition of Universal Set $U_{\text{Beds}}$:</p>
+                <div class="p-3 bg-light rounded-3 font-monospace text-xs mb-3">
+                    Disjointness: $S_{\text{Available}} \cap S_{\text{Occupied}} \cap S_{\text{Maint}} = \emptyset$<br>
+                    Union Completeness: $S_{\text{Available}} \cup S_{\text{Occupied}} \cup S_{\text{Maint}} = U_{\text{Beds}}$
+                </div>
+                <div id="setTheoryReportStatus" class="text-xs text-success fw-bold">
+                    <i class="fa-solid fa-circle-check me-1"></i> Formally Verified Live Invariant
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Concept 4: Binary Relations -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold m-0 text-slate-800">
+                    <i class="fa-solid fa-link text-primary me-2"></i> 4. Binary Relations & Functions
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-sm text-secondary">Bed allocation defines composite binary relations:</p>
+                <div class="p-3 bg-light rounded-3 font-monospace text-xs mb-3">
+                    $R_{PD} \subseteq P \times D$ (Patient $\to$ Dept requirement)<br>
+                    $R_{DB} \subseteq D \times B$ (Dept $\to$ Bed containment)<br>
+                    Composite Mapping $R_{PB} = R_{PD} \circ R_{DB} \subseteq P \times B$
+                </div>
+                <p class="text-xs text-muted">$R_{PB}$ is an injective function: Each allocated patient is mapped to at most one unique bed.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

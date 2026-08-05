@@ -1,0 +1,149 @@
+:root {
+    --primary-color: #0284c7;
+    --primary-hover: #0369a1;
+    --primary-light: #e0f2fe;
+    --secondary-color: #475569;
+    --dark-bg: #0f172a;
+    --light-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    
+    --emergency-color: #dc2626;
+    --critical-color: #ea580c;
+    --general-color: #2563eb;
+    
+    --available-color: #10b981;
+    --occupied-color: #ef4444;
+    --maintenance-color: #f59e0b;
+
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--light-bg);
+    color: #1e293b;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-title {
+    font-family: var(--font-heading);
+}
+
+/* Sidebar Styling */
+.sidebar-wrapper {
+    width: 260px;
+    min-height: 100vh;
+    background-color: #ffffff;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.sidebar-wrapper .nav-link {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.65rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.sidebar-wrapper .nav-link:hover {
+    color: var(--primary-color);
+    background-color: var(--primary-light);
+}
+
+.sidebar-wrapper .nav-link.active {
+    color: #ffffff;
+    background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+}
+
+/* Dashboard Metric Cards */
+.metric-card {
+    background-color: var(--card-bg);
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+
+.icon-shape {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Priority & Status Badges */
+.badge-emergency {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+.badge-critical {
+    background-color: #ffedd5;
+    color: #c2410c;
+    border: 1px solid #fdba74;
+}
+
+.badge-general {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+}
+
+.badge-available {
+    background-color: #d1fae5;
+    color: #047857;
+    border: 1px solid #6ee7b7;
+}
+
+.badge-occupied {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+.badge-maintenance {
+    background-color: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+/* Graph Visualization Canvas */
+#graphNetworkCanvas {
+    width: 100%;
+    height: 440px;
+    background: radial-gradient(circle at center, #ffffff 0%, #f8fafc 100%);
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.tracking-wider {
+    letter-spacing: 0.05em;
+}
+
+.table th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    font-weight: 600;
+}

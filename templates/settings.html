@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - Hospital Bed System{% endblock %}
+{% block page_title %}System Configuration & Database Settings{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold m-0 text-slate-800">
+                    <i class="fa-solid fa-database text-primary me-2"></i> Database Configuration
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Active Database Engine</label>
+                    <input type="text" class="form-control font-monospace" readonly value="{{ config['DB_TYPE'].upper() }} (SQLAlchemy ORM)">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Database Connection String</label>
+                    <input type="text" class="form-control font-monospace text-xs" readonly value="{{ config['SQLALCHEMY_DATABASE_URI'] }}">
+                </div>
+                <small class="text-muted d-block mb-3">To switch to MySQL, set environment variables <code>DB_TYPE=mysql</code>, <code>MYSQL_USER</code>, <code>MYSQL_PASSWORD</code>, and <code>MYSQL_DB</code>.</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold m-0 text-slate-800">
+                    <i class="fa-solid fa-arrows-rotate text-primary me-2"></i> Sample Data Reset & Seeder
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-sm text-secondary">Reset the hospital database back to default state: 5 Departments (ICU, Emergency, General Ward, Pediatrics, Orthopedics), 120 Beds, 45 Patients, and initial priority allocation matching.</p>
+                
+                <button class="btn btn-warning fw-semibold px-4 rounded-3" onclick="resetDatabase()">
+                    <i class="fa-solid fa-rotate me-2"></i> Reset & Re-Seed Sample Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

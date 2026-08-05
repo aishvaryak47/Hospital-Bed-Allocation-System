@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}Intelligent Bed Allocation Engine - Hospital System{% endblock %}
+{% block page_title %}Intelligent Bed Allocation Engine (Discrete Math){% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Algorithmic Control Panel -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold m-0 text-slate-800">
+                    <i class="fa-solid fa-microchip text-primary me-2"></i> Discrete Optimization Solver
+                </h6>
+                <span class="badge bg-success-subtle text-success border border-success-subtle">NetworkX Engine Ready</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info border-0 rounded-3 mb-4">
+                    <h6 class="fw-bold"><i class="fa-solid fa-lightbulb me-2"></i> How the Engine Works:</h6>
+                    <ol class="mb-0 ps-3 text-xs">
+                        <li><strong>Priority Queue:</strong> Arranges waiting patients by urgency level (Emergency L1 &gt; Critical L2 &gt; General L3) & admission time.</li>
+                        <li><strong>Graph Matching:</strong> NetworkX constructs bipartite graph $G = (V_P \cup V_B, E)$ and computes optimal matching.</li>
+                        <li><strong>Set State Update:</strong> Atomic transition moves allocated bed from $S_{\text{Available}}$ to $S_{\text{Occupied}}$.</li>
+                    </ol>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary btn-lg shadow-sm font-weight-medium rounded-3 py-3" onclick="triggerAutoAllocationEngine()">
+                        <i class="fa-solid fa-gears me-2"></i> Execute Priority-Graph Auto Allocation
+                    </button>
+                </div>
+
+                <div id="allocationEngineOutput" class="mt-4 d-none">
+                    <h6 class="fw-bold text-dark mb-2">Engine Execution Results:</h6>
+                    <div class="p-3 bg-dark text-light rounded-3 font-monospace text-xs" style="max-height: 220px; overflow-y: auto;" id="consoleLogs">
+                        <!-- Log messages output here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Allocation Fallback -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold m-0 text-slate-800">
+                    <i class="fa-solid fa-hand-pointer text-primary me-2"></i> Manual Allocation Override
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <form id="manualAllocForm" onsubmit="handleManualAllocation(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Select Pending Patient</label>
+                        <select class="form-select" id="manualPatientSelect" name="patient_id" required>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-medium">Select Available Bed</label>
+                        <select class="form-select" id="manualBedSelect" name="bed_id" required>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        <i class="fa-solid fa-link me-1"></i> Force Allocate Selected Pair
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Patients Queue Table -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-bottom py-3">
+        <h6 class="fw-bold m-0 text-slate-800">
+            <i class="fa-solid fa-hourglass-half text-warning-emphasis me-2"></i> Pending Patient Priority Queue (Heap Order)
+        </h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle m-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Heap Rank</th>
+                        <th>Patient Code</th>
+                        <th>Patient Name</th>
+                        <th>Diagnosis</th>
+                        <th>Target Dept</th>
+                        <th>Priority Urgency</th>
+                        <th>Wait Time</th>
+                        <th class="pe-4 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="queueTableBody">
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">Loading priority queue...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        loadPendingQueue();
+        loadManualSelects();
+    });
+
+    async function loadPendingQueue() {
+        try {
+            const res = await fetch('/api/patients?status=Pending');
+            const patients = await res.json();
+            
+            const tbody = document.getElementById('queueTableBody');
+            if (patients.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-success fw-medium"><i class="fa-solid fa-circle-check me-2"></i> All patients have been allocated to beds! Queue is empty.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = patients.map((p, idx) => `
+                <tr>
+                    <td class="ps-4 font-monospace fw-bold text-muted">#${idx + 1}</td>
+                    <td class="font-monospace fw-semibold text-primary">${p.patient_code}</td>
+                    <td class="fw-bold text-dark">${p.name}</td>
+                    <td>${p.disease}</td>
+                    <td><span class="badge bg-light text-dark border">${p.department_name}</span></td>
+                    <td>
+                        <span class="badge ${p.priority === 'Emergency' ? 'badge-emergency' : (p.priority === 'Critical' ? 'badge-critical' : 'badge-general')}">
+                            ${p.priority} (Level ${p.priority_level})
+                        </span>
+                    </td>
+                    <td class="text-muted text-xs">${p.admission_time}</td>
+                    <td class="pe-4 text-end">
+                        <button class="btn btn-xs btn-primary" onclick="quickAllocate(${p.id})">Find Bed</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            console.error("Failed to load queue", err);
+        }
+    }
+
+    async function loadManualSelects() {
+        try {
+            // Load pending patients
+            const pRes = await fetch('/api/patients?status=Pending');
+            const patients = await pRes.json();
+            const pSelect = document.getElementById('manualPatientSelect');
+            pSelect.innerHTML = patients.map(p => `<option value="${p.id}">${p.patient_code} - ${p.name} (${p.priority})</option>`).join('');
+
+            // Load available beds
+            const bRes = await fetch('/api/beds?availability=Available');
+            const beds = await bRes.json();
+            const bSelect = document.getElementById('manualBedSelect');
+            bSelect.innerHTML = beds.map(b => `<option value="${b.id}">${b.bed_number} - ${b.department_name} (${b.bed_type})</option>`).join('');
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function triggerAutoAllocationEngine() {
+        const consoleBox = document.getElementById('consoleLogs');
+        document.getElementById('allocationEngineOutput').classList.remove('d-none');
+        consoleBox.innerHTML = `[INFO] Initializing NetworkX Graph Theory Bipartite Solver...\n[INFO] Extracting pending patients from heapq Priority Queue...\n`;
+
+        try {
+            const res = await fetch('/api/allocate/auto', { method: 'POST' });
+            const data = await res.json();
+            
+            if (data.allocations.length === 0) {
+                consoleBox.innerHTML += `[WARN] No pending patients or available matching beds found.\n`;
+            } else {
+                data.allocations.forEach(a => {
+                    consoleBox.innerHTML += `[SUCCESS] Patient ${a.patient_code} (${a.patient_name}, ${a.priority}) matched -> Bed ${a.bed_number} [${a.department}]\n`;
+                });
+                consoleBox.innerHTML += `[INFO] ${data.message}\n[INFO] Set Theory State transformed: Available set -> Occupied set.\n`;
+            }
+            
+            loadPendingQueue();
+            loadManualSelects();
+        } catch (err) {
+            consoleBox.innerHTML += `[ERROR] Failed to run allocation algorithm.\n`;
+        }
+    }
+
+    async function handleManualAllocation(e) {
+        e.preventDefault();
+        const patient_id = document.getElementById('manualPatientSelect').value;
+        const bed_id = document.getElementById('manualBedSelect').value;
+
+        try {
+            const res = await fetch('/api/allocate/manual', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ patient_id, bed_id })
+            });
+            const json = await res.json();
+            if (res.ok) {
+                showAlert(json.message, 'success');
+                loadPendingQueue();
+                loadManualSelects();
+            } else {
+                showAlert(json.error, 'danger');
+            }
+        } catch (err) {
+            showAlert('Manual allocation failed.', 'danger');
+        }
+    }
+</script>
+{% endblock %}
