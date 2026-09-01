@@ -48,12 +48,16 @@ Hospital bed allocation is a critical challenge in healthcare management. This a
 
 ---
 
-## 🚀 Quick Start Guide
+## 🚀 Quick Start Guide & Launch Link
+
+### 🔗 Application Links
+- **Local Application Launch Link:** [http://127.0.0.1:5000](http://127.0.0.1:5000)
+- **GitHub Repository:** [https://github.com/aishvaryak47/Hospital-Bed-Allocation-System](https://github.com/aishvaryak47/Hospital-Bed-Allocation-System)
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/aishvaryak47/Hospital-Bed-Allocation-System-Discrete-Math.git
-cd Hospital-Bed-Allocation-System-Discrete-Math
+git clone https://github.com/aishvaryak47/Hospital-Bed-Allocation-System.git
+cd Hospital-Bed-Allocation-System
 ```
 
 ### 2. Install Dependencies
@@ -70,7 +74,7 @@ python seed_data.py
 ```bash
 python app.py
 ```
-Open your browser and navigate to `http://127.0.0.1:5000`.
+Open your browser and navigate to the application launch link: **`http://127.0.0.1:5000`**.
 
 ---
 
